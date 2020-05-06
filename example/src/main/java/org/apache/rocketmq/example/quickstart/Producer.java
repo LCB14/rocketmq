@@ -45,12 +45,15 @@ public class Producer {
          * </pre>
          */
 
+        // 设置NameServer的地址，确保Producer可以找到NameServer获取相关的Broker地址
+        producer.setNamesrvAddr("127.0.0.1:9876");
+
         /*
          * Launch the instance.
          */
         producer.start();
 
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 1; i++) {
             try {
 
                 /*
