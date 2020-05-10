@@ -39,7 +39,7 @@ import org.apache.rocketmq.remoting.netty.TlsSystemConfig;
 import org.apache.rocketmq.srvutil.FileWatchService;
 
 /**
- * 专门用来接受Broker和客户端网络请求的一个NameServer组件
+ * 专门用来接受Broker和客户端网络请求的一个NameServer端组件
  */
 public class NamesrvController {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
@@ -79,6 +79,7 @@ public class NamesrvController {
 
         this.kvConfigManager.load();
 
+        // 创建Netty Server
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
 
         this.remotingExecutor =
