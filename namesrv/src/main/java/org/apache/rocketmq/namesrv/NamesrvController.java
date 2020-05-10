@@ -86,7 +86,7 @@ public class NamesrvController {
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
 
-        // 把工作线程池交给 Netty 服务器管理
+        // 注册网络请求处理器
         this.registerProcessor();
 
         /**
@@ -154,11 +154,11 @@ public class NamesrvController {
 
     private void registerProcessor() {
         if (namesrvConfig.isClusterTest()) {
-
+            // 用于处理测试集群的
             this.remotingServer.registerDefaultProcessor(new ClusterTestRequestProcessor(this, namesrvConfig.getProductEnvName()),
                 this.remotingExecutor);
         } else {
-
+            // 这里对NameServer的默认请求处理组件进行注册
             this.remotingServer.registerDefaultProcessor(new DefaultRequestProcessor(this), this.remotingExecutor);
         }
     }
