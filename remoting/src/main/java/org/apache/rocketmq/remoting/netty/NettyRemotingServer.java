@@ -209,12 +209,15 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline()
+                                // handshakeHandler负责握手连接
                             .addLast(defaultEventExecutorGroup, HANDSHAKE_HANDLER_NAME, handshakeHandler)
                             .addLast(defaultEventExecutorGroup,
+                                // 负责编码解码
                                 encoder,
                                 new NettyDecoder(),
+                                // 负责连接空闲管理
                                 new IdleStateHandler(0, 0, nettyServerConfig.getServerChannelMaxIdleTimeSeconds()),
-                                connectionManageHandler,
+                                connectionManageHandler,// 负责网络请求处理
                                 serverHandler
                             );
                     }

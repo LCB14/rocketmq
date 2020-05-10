@@ -82,11 +82,16 @@ public class NamesrvController {
         // 创建Netty Server
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
 
+        // 创建 Netty 服务器的工作线程池
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
 
+        // 把工作线程池交给 Netty 服务器管理
         this.registerProcessor();
 
+        /**
+         * 启动一个后台线程，定时扫描那些没有按时上报心跳信息的Broker
+         */
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -95,6 +100,9 @@ public class NamesrvController {
             }
         }, 5, 10, TimeUnit.SECONDS);
 
+        /**
+         * 同样是启动一个后台线程，定时打印kv配置信息
+         */
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -156,6 +164,7 @@ public class NamesrvController {
     }
 
     public void start() throws Exception {
+        // 启动Netty服务器
         this.remotingServer.start();
 
         if (this.fileWatchService != null) {

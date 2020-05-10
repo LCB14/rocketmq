@@ -152,9 +152,11 @@ public class NamesrvStartup {
             System.exit(-3);
         }
 
+        // 通过Runtime；类注册了一个JVM关闭时候的shutdown钩子，当JVM关闭的时候就会回调下面注册的实例方法
         Runtime.getRuntime().addShutdownHook(new ShutdownHookThread(log, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
+                // 主要是关闭netty服务器，释放一下网络资源和线程资源
                 controller.shutdown();
                 return null;
             }
