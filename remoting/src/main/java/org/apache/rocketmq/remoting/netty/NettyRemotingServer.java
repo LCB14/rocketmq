@@ -218,7 +218,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                                 // 负责连接空闲管理
                                 new IdleStateHandler(0, 0, nettyServerConfig.getServerChannelMaxIdleTimeSeconds()),
                                 connectionManageHandler,// 负责网络请求处理
-                                serverHandler
+                                serverHandler// 负责处理Broker的注册请求
                             );
                     }
                 });
