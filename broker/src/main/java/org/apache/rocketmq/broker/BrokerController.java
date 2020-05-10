@@ -900,7 +900,7 @@ public class BrokerController {
             this.registerBrokerAll(true, false, true);
         }
 
-        // 向线程池提交一个向NameServer发起注册的任务即把刚启动的Broker信息注册到NameServer中
+        // 每隔一段时间（30s）Broker就会自动向NameServer发送一次注册请求
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
