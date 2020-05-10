@@ -860,6 +860,7 @@ public class BrokerController {
     }
 
     public void start() throws Exception {
+        // 启动消息存储的核心组件
         if (this.messageStore != null) {
             this.messageStore.start();
         }
@@ -876,6 +877,7 @@ public class BrokerController {
             this.fileWatchService.start();
         }
 
+        // 这个组件实际上是基于netty客户端给别人发送请求（例如：注册、心跳）
         if (this.brokerOuterAPI != null) {
             this.brokerOuterAPI.start();
         }
@@ -898,6 +900,7 @@ public class BrokerController {
             this.registerBrokerAll(true, false, true);
         }
 
+        // 向线程池提交一个向NameServer发起注册的任务即把刚启动的Broker信息注册到NameServer中
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -959,12 +962,14 @@ public class BrokerController {
                 this.brokerConfig.getBrokerName(),
                 this.brokerConfig.getBrokerId(),
                 this.brokerConfig.getRegisterBrokerTimeoutMills())) {
+            // 真正进行注册的逻辑
             doRegisterBrokerAll(checkOrderConfig, oneway, topicConfigWrapper);
         }
     }
 
     private void doRegisterBrokerAll(boolean checkOrderConfig, boolean oneway,
                                      TopicConfigSerializeWrapper topicConfigWrapper) {
+        // 注册
         List<RegisterBrokerResult> registerBrokerResultList = this.brokerOuterAPI.registerBrokerAll(
                 this.brokerConfig.getBrokerClusterName(),
                 this.getBrokerAddr(),
