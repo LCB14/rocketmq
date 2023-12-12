@@ -17,16 +17,47 @@
 package org.apache.rocketmq.remoting.netty;
 
 public class NettyServerConfig implements Cloneable {
+    /**
+     * 表示 NettyServer 默认的监听端口号，这个值在 NameServer 启动的时候写死为9876了
+     */
     private int listenPort = 8888;
+
+    /**
+     * 表示 NettyServer 的工作线程数量
+     */
     private int serverWorkerThreads = 8;
+
+    /**
+     * 表示 Netty 的 public 线程池的线程数量，默认为0。
+     */
     private int serverCallbackExecutorThreads = 0;
+
+    /**
+     * 表示 Netty 的IO线程池的线程数量，默认值为3。
+     * 这里的线程是负责解析网络请求的，解析完之后，就会把请求转发给work线程池处理。
+     */
     private int serverSelectorThreads = 3;
+
+    /**
+     * 下面两个主要是和Broker端相关
+     */
     private int serverOnewaySemaphoreValue = 256;
     private int serverAsyncSemaphoreValue = 64;
+
+    /**
+     * 表示一个网络连接空闲超过120s，就会被关闭。
+     */
     private int serverChannelMaxIdleTimeSeconds = 120;
 
+    /**
+     * socket send buffer缓存区以及receive buffer缓存区的大小。
+     */
     private int serverSocketSndBufSize = NettySystemConfig.socketSndbufSize;
     private int serverSocketRcvBufSize = NettySystemConfig.socketRcvbufSize;
+
+    /**
+     * 表示 ByteBuffer 是否开启缓存，默认是开启的。
+     */
     private boolean serverPooledByteBufAllocatorEnable = true;
 
     /**
@@ -35,6 +66,7 @@ public class NettyServerConfig implements Cloneable {
      *
      * ../glibc-2.10.1/configure \ --prefix=/usr \ --with-headers=/usr/include \
      * --host=x86_64-linux-gnu \ --build=x86_64-pc-linux-gnu \ --without-gd
+     * 是否启动epoll IO模型，默认是不开启的。
      */
     private boolean useEpollNativeSelector = false;
 

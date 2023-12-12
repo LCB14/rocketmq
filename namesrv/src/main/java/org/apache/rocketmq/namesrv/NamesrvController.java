@@ -66,10 +66,7 @@ public class NamesrvController {
         this.kvConfigManager = new KVConfigManager(this);
         this.routeInfoManager = new RouteInfoManager();
         this.brokerHousekeepingService = new BrokerHousekeepingService(this);
-        this.configuration = new Configuration(
-            log,
-            this.namesrvConfig, this.nettyServerConfig
-        );
+        this.configuration = new Configuration(log, this.namesrvConfig, this.nettyServerConfig);
         this.configuration.setStorePathFromConfig(this.namesrvConfig, "configStorePath");
     }
 
@@ -77,23 +74,33 @@ public class NamesrvController {
 
         this.kvConfigManager.load();
 
+        // 创建 Netty Server
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
 
+        // 创建 Netty 服务器的工作线程池
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
 
+        /**
+         * 注册网络请求处理器(将网络请求处理器和remotingExecutor线程池组成一个 pair)
+         * @see org.apache.rocketmq.remoting.netty.NettyRemotingServer#registerDefaultProcessor(org.apache.rocketmq.remoting.netty.NettyRequestProcessor, java.util.concurrent.ExecutorService)
+         */
         this.registerProcessor();
 
+        /**
+         * 启动一个后台线程，每隔10秒扫描一次那些没有按时上报心跳信息的Broker
+         */
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-
             @Override
             public void run() {
                 NamesrvController.this.routeInfoManager.scanNotActiveBroker();
             }
         }, 5, 10, TimeUnit.SECONDS);
 
+        /**
+         * 同样是启动一个后台线程，每10秒打印kv配置信息
+         */
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-
             @Override
             public void run() {
                 NamesrvController.this.kvConfigManager.printAllPeriodically();
@@ -143,16 +150,17 @@ public class NamesrvController {
 
     private void registerProcessor() {
         if (namesrvConfig.isClusterTest()) {
-
             this.remotingServer.registerDefaultProcessor(new ClusterTestRequestProcessor(this, namesrvConfig.getProductEnvName()),
                 this.remotingExecutor);
         } else {
-
             this.remotingServer.registerDefaultProcessor(new DefaultRequestProcessor(this), this.remotingExecutor);
         }
     }
 
     public void start() throws Exception {
+        /**
+         * @see NettyRemotingServer#start()
+         */
         this.remotingServer.start();
 
         if (this.fileWatchService != null) {

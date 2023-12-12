@@ -52,7 +52,6 @@ public class NamesrvStartup {
     }
 
     public static NamesrvController main0(String[] args) {
-
         try {
             NamesrvController controller = createNamesrvController(args);
             start(controller);
@@ -79,15 +78,22 @@ public class NamesrvStartup {
             return null;
         }
 
+        /**
+         * step1:解析broker.conf配置文件，实例化NamesrvConfig、NettyServerConfig存储解析的配置信息✨
+         */
         final NamesrvConfig namesrvConfig = new NamesrvConfig();
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
         nettyServerConfig.setListenPort(9876);
+
+        // 解析 mqnamesrc 启动命令，-c参数后面跟的配置文件地址对应的信息
         if (commandLine.hasOption('c')) {
             String file = commandLine.getOptionValue('c');
             if (file != null) {
                 InputStream in = new BufferedInputStream(new FileInputStream(file));
                 properties = new Properties();
                 properties.load(in);
+
+                // 把读取的配置都设置到两个核心配置类中
                 MixAll.properties2Object(properties, namesrvConfig);
                 MixAll.properties2Object(properties, nettyServerConfig);
 
@@ -98,6 +104,7 @@ public class NamesrvStartup {
             }
         }
 
+        // -p 表示打印的意思，通过解析是否存在该参数决定是否打印 nameServer 的所有配置信息
         if (commandLine.hasOption('p')) {
             InternalLogger console = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_CONSOLE_NAME);
             MixAll.printObjectProperties(console, namesrvConfig);
@@ -105,8 +112,10 @@ public class NamesrvStartup {
             System.exit(0);
         }
 
+        // 把 mqnamesrv 命令行中的其它配置选项都读出来并设置到 namesrvConfig 中
         MixAll.properties2Object(ServerUtil.commandLine2Properties(commandLine), namesrvConfig);
 
+        // 校验 ROCKETMQ_HOME 这个环境变量值不能为空
         if (null == namesrvConfig.getRocketmqHome()) {
             System.out.printf("Please set the %s variable in your environment to match the location of the RocketMQ installation%n", MixAll.ROCKETMQ_HOME_ENV);
             System.exit(-2);
@@ -123,6 +132,10 @@ public class NamesrvStartup {
         MixAll.printObjectProperties(log, namesrvConfig);
         MixAll.printObjectProperties(log, nettyServerConfig);
 
+        /**
+         * step2：利用step1解析的配置信息，创建NamessrvController✨
+         * 注：NamesrvController专门用来接受Broker和客户端网络请求的一个NameServer端组件
+         */
         final NamesrvController controller = new NamesrvController(namesrvConfig, nettyServerConfig);
 
         // remember all configs to prevent discard
@@ -132,7 +145,6 @@ public class NamesrvStartup {
     }
 
     public static NamesrvController start(final NamesrvController controller) throws Exception {
-
         if (null == controller) {
             throw new IllegalArgumentException("NamesrvController is null");
         }
@@ -143,9 +155,11 @@ public class NamesrvStartup {
             System.exit(-3);
         }
 
+        // 通过Runtime类注册了一个JVM关闭时候的shutdown钩子，当JVM关闭的时候就会回调下面注册的实例方法
         Runtime.getRuntime().addShutdownHook(new ShutdownHookThread(log, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
+                // 主要是关闭netty服务器，释放一下网络资源和线程资源
                 controller.shutdown();
                 return null;
             }
