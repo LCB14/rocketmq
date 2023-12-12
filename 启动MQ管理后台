@@ -1,0 +1,4 @@
+1、拉去代码：git@github.com:LCB14/rocketmq-externals.git
+2、切换分支：git checkout rocketmq-console
+3、打包：mvn package -DskipTests
+4、运行：java -jar rocketmq-console-ng-1.0.0.jar --server.port=8080 --rocketmq.config.namesrvAddr=127.0.0.1:9876
