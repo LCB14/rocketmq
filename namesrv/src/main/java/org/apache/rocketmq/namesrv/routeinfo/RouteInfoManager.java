@@ -43,6 +43,7 @@ import org.apache.rocketmq.common.protocol.route.BrokerData;
 import org.apache.rocketmq.common.protocol.route.QueueData;
 import org.apache.rocketmq.common.protocol.route.TopicRouteData;
 import org.apache.rocketmq.common.sysflag.TopicSysFlag;
+import org.apache.rocketmq.namesrv.NamesrvController;
 import org.apache.rocketmq.remoting.common.RemotingUtil;
 
 public class RouteInfoManager {
@@ -111,8 +112,10 @@ public class RouteInfoManager {
         RegisterBrokerResult result = new RegisterBrokerResult();
         try {
             try {
+                // 加锁，保证同一时间只能有一个线程来执行
                 this.lock.writeLock().lockInterruptibly();
 
+                // 因为这里是set集合自动去重，所以Broker每隔30s发起注册一次，对集群中真正broker数量是没有影响的
                 Set<String> brokerNames = this.clusterAddrTable.get(clusterName);
                 if (null == brokerNames) {
                     brokerNames = new HashSet<String>();
@@ -122,6 +125,7 @@ public class RouteInfoManager {
 
                 boolean registerFirst = false;
 
+                // 如果是第一次注册，这里就会返回null
                 BrokerData brokerData = this.brokerAddrTable.get(brokerName);
                 if (null == brokerData) {
                     registerFirst = true;
@@ -156,6 +160,12 @@ public class RouteInfoManager {
                     }
                 }
 
+                /**
+                 * 处理broker心跳的核心逻辑(注：这里的时间戳有大用！！ System.currentTimeMillis())
+                 *
+                 * @see NamesrvController#initialize() 会启动一个定时任务，不断扫描那些未能按时上报心跳信息的broker节点信息
+                 * @see RouteInfoManager#scanNotActiveBroker()
+                 */
                 BrokerLiveInfo prevBrokerLiveInfo = this.brokerLiveTable.put(brokerAddr,
                     new BrokerLiveInfo(
                         System.currentTimeMillis(),
@@ -431,6 +441,7 @@ public class RouteInfoManager {
         while (it.hasNext()) {
             Entry<String, BrokerLiveInfo> next = it.next();
             long last = next.getValue().getLastUpdateTimestamp();
+            // 默认是120s,也就是说如果一个broker两分钟没发送心跳，NameServer就会认为该broker挂了
             if ((last + BROKER_CHANNEL_EXPIRED_TIME) < System.currentTimeMillis()) {
                 RemotingUtil.closeChannel(next.getValue().getChannel());
                 it.remove();

@@ -214,7 +214,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                                 encoder, // 负责编码解码
                                 new NettyDecoder(),
                                 new IdleStateHandler(0, 0, nettyServerConfig.getServerChannelMaxIdleTimeSeconds()), // 负责连接空闲管理
-                                connectionManageHandler, // 负责网络请求处理
+                                connectionManageHandler, // 负责网络连接请求处理
                                 serverHandler // 负责处理Broker的注册请求
                             );
                     }
